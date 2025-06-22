@@ -31,22 +31,26 @@ class Ingredient(models.Model):
 
 
 class Recipe(models.Model):
-    author = models.ForeignKey(User, blank=False, null=False,
+    # blank=False, null=False
+    author = models.ForeignKey(User, blank=True, null=True,
                                on_delete=models.CASCADE, related_name='recipes',
                                verbose_name='Автор рецепта', )
 
     title = models.CharField(blank=False, null=False,
                              max_length=TITLE_MAX_LENGTH, verbose_name='Название рецепта')
 
-    image = models.ImageField(blank=False, null=False,
+    # blank=False, null=False
+    image = models.ImageField(blank=True,
                               verbose_name='Картинка', upload_to='recipe_pictures')
 
     description = models.TextField(blank=False, null=False, verbose_name='Описание рецепта')
 
-    ingredients = models.ManyToManyField(Ingredient, blank=False, through='RecipeIngredient',
+    # blank=False
+    ingredients = models.ManyToManyField(Ingredient, blank=True, through='RecipeIngredient',
                                          related_name='recipes', verbose_name='Ингредиенты')
 
-    tags = models.ManyToManyField(Tag, blank=False, related_name='recipes', verbose_name='Теги')
+    # blank=False
+    tags = models.ManyToManyField(Tag, blank=True, related_name='recipes', verbose_name='Теги')
 
     cooking_time = models.PositiveIntegerField(blank=False, null=False,
                                                verbose_name='Время приготовления в мин.')
