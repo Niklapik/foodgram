@@ -13,4 +13,6 @@ router.register(rf"recipes/(?P<id>[1-9]\d*)/favorite", FavoriteRecipeViewSet, ba
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('', include('djoser.urls')),
+    path('', include('djoser.urls.jwt')),
 ]
