@@ -1,8 +1,14 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, status
+from rest_framework.response import Response
+from rest_framework.decorators import action
 
-from recipes.models import Tag, Ingredient, FavoriteRecipe, Recipe
+from django.shortcuts import get_object_or_404
 
-from .serializers import TagSerializer, IngredientSerializer, FavoriteRecipeSerializer, RecipeSerializer
+from recipes.models import Tag, Ingredient, FavoriteRecipe, Recipe, User
+from users.models import Subscription
+
+from .serializers import (TagSerializer, IngredientSerializer, FavoriteRecipeSerializer, RecipeSerializer,
+                          SubscriptionSerializer)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -23,3 +29,40 @@ class IngredientViewSet(viewsets.ModelViewSet):
 class FavoriteRecipeViewSet(viewsets.ModelViewSet):
     queryset = FavoriteRecipe.objects.all()
     serializer_class = FavoriteRecipeSerializer
+
+
+class SubscriptionViewSet(viewsets.ViewSet):
+
+    def get_queryset(self):
+        return User.objects.filter(subscribers__user=self.request.user)
+
+    @action(detail=False, methods=['get'], url_path='subscriptions')
+    def subscriptions(self, request):
+        # queryset = self.get_queryset()
+        subscriptions = Subscription.objects.filter(user=request.user)
+        serializer = SubscriptionSerializer(subscriptions, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post', 'delete'], url_path='subscribe')
+    def subscribe(self, request, pk=None):
+        user = request.user
+        author = get_object_or_404(User, pk=pk)
+
+        if author == user:
+            return Response({'detail': 'Нельзя подписаться на самого себя.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        if request.method == 'POST':
+            subscription, created = Subscription.objects.get_or_create(user=user, author=author)
+            if not created:
+                return Response({'detail': 'Вы уже подписаны на этого пользователя.'},
+                                status=status.HTTP_400_BAD_REQUEST)
+            serializer = SubscriptionSerializer(subscription)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        if request.method == 'DELETE':
+            deleted, _ = Subscription.objects.filter(user=user, author=author).delete()
+            if deleted == 0:
+                return Response({'detail': 'Вы не были подписаны на этого пользователя.'},
+                                status=status.HTTP_400_BAD_REQUEST)
+            return Response(status=status.HTTP_204_NO_CONTENT)
