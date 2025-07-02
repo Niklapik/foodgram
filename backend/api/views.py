@@ -3,12 +3,13 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 
 from django.shortcuts import get_object_or_404
+from djoser.views import UserViewSet
 
 from recipes.models import Tag, Ingredient, FavoriteRecipe, Recipe, User
 from users.models import Subscription
 
 from .serializers import (TagSerializer, IngredientSerializer, FavoriteRecipeSerializer, RecipeSerializer,
-                          SubscriptionSerializer)
+                          SubscriptionSerializer, CustomUserCreateSerializer)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -29,6 +30,11 @@ class IngredientViewSet(viewsets.ModelViewSet):
 class FavoriteRecipeViewSet(viewsets.ModelViewSet):
     queryset = FavoriteRecipe.objects.all()
     serializer_class = FavoriteRecipeSerializer
+
+
+class CustomUserCreateViewSet(UserViewSet):
+    queryset = User.objects.all()
+    serializer_class = CustomUserCreateSerializer
 
 
 class SubscriptionViewSet(viewsets.ViewSet):

@@ -1,7 +1,8 @@
 from rest_framework import serializers
 
-from recipes.models import Tag, Ingredient, FavoriteRecipe, Recipe
-from users.models import Subscription
+from recipes.models import Tag, Ingredient, FavoriteRecipe, Recipe, User
+from users.models import Subscription, CustomUser
+from djoser.serializers import UserCreateSerializer
 
 
 class RecipeSerializer(serializers.ModelSerializer):
@@ -32,3 +33,12 @@ class SubscriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subscription
         fields = '__all__'
+
+
+class CustomUserCreateSerializer(UserCreateSerializer):
+    first_name = serializers.CharField(required=True)
+    last_name = serializers.CharField(required=True)
+
+    class Meta(UserCreateSerializer.Meta):
+        model = CustomUser
+        fields = ('email', 'username', 'first_name', 'last_name', 'password')
