@@ -23,8 +23,8 @@ class Ingredient(models.Model):
     name = models.CharField(blank=False, null=False,
                             max_length=NAME_MAX_LENGTH, verbose_name='Название ингредиента')
 
-    unit = models.CharField(blank=False, null=False,
-                            max_length=UNIT_MAX_LENGTH, verbose_name='Название единицы измерения')
+    measurement_unit = models.CharField(blank=False, null=False,
+                                        max_length=UNIT_MAX_LENGTH, verbose_name='Название единицы измерения')
 
     def __str__(self):
         return self.title
