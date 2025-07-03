@@ -16,6 +16,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
 
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
+
     @action(detail=True, methods=['post', 'delete'])
     def favorite(self, request, pk=None):
         recipe = self.get_object()
@@ -67,7 +70,7 @@ class SubscriptionViewSet(viewsets.ViewSet):
     def subscriptions(self, request):
         # queryset = self.get_queryset()
         subscriptions = Subscription.objects.filter(user=request.user)
-        serializer = SubscriptionSerializer(subscriptions, many=True)
+        serializer = SubscriptionSerializer(subscriptions, context={'request': request}, many=True)
         return Response(serializer.data)
 
     @action(detail=True, methods=['post', 'delete'], url_path='subscribe')
@@ -84,7 +87,7 @@ class SubscriptionViewSet(viewsets.ViewSet):
             if not created:
                 return Response({'detail': 'Вы уже подписаны на этого пользователя.'},
                                 status=status.HTTP_400_BAD_REQUEST)
-            serializer = SubscriptionSerializer(subscription)
+            serializer = SubscriptionSerializer(subscription, context={'request': request})
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         if request.method == 'DELETE':
