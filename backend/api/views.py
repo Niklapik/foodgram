@@ -8,13 +8,39 @@ from djoser.views import UserViewSet
 from recipes.models import Tag, Ingredient, FavoriteRecipe, Recipe, User
 from users.models import Subscription
 
-from .serializers import (TagSerializer, IngredientSerializer, FavoriteRecipeSerializer, RecipeSerializer,
-                          SubscriptionSerializer, CustomUserCreateSerializer)
+from .serializers import (TagSerializer, IngredientSerializer, RecipeSerializer,
+                          SubscriptionSerializer, CustomUserCreateSerializer, FavoriteRecipeSerializer)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
+
+    @action(detail=True, methods=['post', 'delete'])
+    def favorite(self, request, pk=None):
+        recipe = self.get_object()
+        user = request.user
+
+        if request.method == 'POST':
+            if FavoriteRecipe.objects.filter(user=user, recipe=recipe).exists():
+                return Response(
+                    {"error": "Рецепт уже в избранном"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            favorite_recipes = user.favorite_recipes.create(recipe=recipe)
+            serializer = FavoriteRecipeSerializer(favorite_recipes)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+        elif request.method == 'DELETE':
+            deleted, _ = FavoriteRecipe.objects.filter(user=user, recipe=recipe).delete()
+            if not deleted:
+                return Response(
+                    {"error": "Рецепт не был в избранном"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class TagViewSet(viewsets.ModelViewSet):
@@ -25,11 +51,6 @@ class TagViewSet(viewsets.ModelViewSet):
 class IngredientViewSet(viewsets.ModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-
-
-class FavoriteRecipeViewSet(viewsets.ModelViewSet):
-    queryset = FavoriteRecipe.objects.all()
-    serializer_class = FavoriteRecipeSerializer
 
 
 class CustomUserCreateViewSet(UserViewSet):

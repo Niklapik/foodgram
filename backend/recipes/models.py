@@ -3,14 +3,14 @@ from django.db import models
 
 User = get_user_model()
 
-TITLE_MAX_LENGTH = 40
+NAME_MAX_LENGTH = 40
 SLUG_MAX_LENGTH = 50
 UNIT_MAX_LENGTH = 20
 
 
 class Tag(models.Model):
-    title = models.CharField(unique=True, blank=False, null=False,
-                             max_length=TITLE_MAX_LENGTH, verbose_name='Название тега')
+    name = models.CharField(unique=True, blank=False, null=False,
+                            max_length=NAME_MAX_LENGTH, verbose_name='Название тега')
 
     slug = models.SlugField(unique=True, blank=False, null=False,
                             max_length=SLUG_MAX_LENGTH, verbose_name='Идентификатор')
@@ -20,8 +20,8 @@ class Tag(models.Model):
 
 
 class Ingredient(models.Model):
-    title = models.CharField(blank=False, null=False,
-                             max_length=TITLE_MAX_LENGTH, verbose_name='Название ингредиента')
+    name = models.CharField(blank=False, null=False,
+                            max_length=NAME_MAX_LENGTH, verbose_name='Название ингредиента')
 
     unit = models.CharField(blank=False, null=False,
                             max_length=UNIT_MAX_LENGTH, verbose_name='Название единицы измерения')
@@ -36,8 +36,8 @@ class Recipe(models.Model):
                                on_delete=models.CASCADE, related_name='recipes',
                                verbose_name='Автор рецепта', )
 
-    title = models.CharField(blank=False, null=False,
-                             max_length=TITLE_MAX_LENGTH, verbose_name='Название рецепта')
+    name = models.CharField(blank=False, null=False,
+                            max_length=NAME_MAX_LENGTH, verbose_name='Название рецепта')
 
     # blank=False, null=False
     image = models.ImageField(blank=True,
