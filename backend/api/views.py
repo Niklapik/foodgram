@@ -61,14 +61,17 @@ class CustomUserCreateViewSet(UserViewSet):
     serializer_class = CustomUserCreateSerializer
 
 
-class SubscriptionViewSet(viewsets.ViewSet):
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = CustomUserCreateSerializer
 
-    def get_queryset(self):
-        return User.objects.filter(subscribers__user=self.request.user)
+    @action(detail=False, methods=['get'])
+    def me(self, request):
+        serializer = self.get_serializer(request.user)
+        return Response(serializer.data)
 
     @action(detail=False, methods=['get'], url_path='subscriptions')
     def subscriptions(self, request):
-        # queryset = self.get_queryset()
         subscriptions = Subscription.objects.filter(user=request.user)
         serializer = SubscriptionSerializer(subscriptions, context={'request': request}, many=True)
         return Response(serializer.data)
