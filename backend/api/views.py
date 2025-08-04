@@ -9,7 +9,7 @@ from recipes.models import Tag, Ingredient, FavoriteRecipe, Recipe, User
 from users.models import Subscription
 
 from .serializers import (TagSerializer, IngredientSerializer, RecipeSerializer,
-                          SubscriptionSerializer, CustomUserCreateSerializer, FavoriteRecipeSerializer)
+                          SubscriptionSerializer, UserSerializer, FavoriteRecipeSerializer)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -56,14 +56,14 @@ class IngredientViewSet(viewsets.ModelViewSet):
     serializer_class = IngredientSerializer
 
 
-class CustomUserCreateViewSet(UserViewSet):
-    queryset = User.objects.all()
-    serializer_class = CustomUserCreateSerializer
+# class CustomUserCreateViewSet(UserViewSet):
+#     queryset = User.objects.all()
+#     serializer_class = UserSerializer
 
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
-    serializer_class = CustomUserCreateSerializer
+    serializer_class = UserSerializer
 
     @action(detail=False, methods=['get'])
     def me(self, request):
