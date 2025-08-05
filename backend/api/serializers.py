@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from recipes.models import Tag, Ingredient, FavoriteRecipe, Recipe, User
 from users.models import Subscription, CustomUser
-from djoser.serializers import UserCreateSerializer
+from djoser.serializers import UserCreateSerializer as DjoserUserCreateSerializer
 
 import base64
 
@@ -85,15 +85,40 @@ class Base64ImageField(serializers.ImageField):
         return super().to_internal_value(data)
 
 
-class UserSerializer(UserCreateSerializer):
+class UserCreateSerializer(DjoserUserCreateSerializer):
     id = serializers.IntegerField(read_only=True)
     password = serializers.CharField(write_only=True)
     first_name = serializers.CharField(required=True, max_length=150)
     last_name = serializers.CharField(required=True, max_length=150)
 
-    # avatar = Base64ImageField(required=False, allow_null=True)
+    class Meta:
+        model = CustomUser
+        fields = ('id', 'email', 'username', 'first_name', 'last_name', 'password',)
+
+
+class UserSerializer(serializers.ModelSerializer):
+    is_subscribed = serializers.SerializerMethodField()
+
+    # avatar = serializers.ImageField(required=False, allow_null=True)
 
     class Meta:
         model = CustomUser
-        # avatar
-        fields = ('id', 'email', 'username', 'first_name', 'last_name', 'password',)
+        fields = ('id', 'email', 'username', 'first_name',
+                  'last_name', 'is_subscribed', 'avatar')
+
+    def get_is_subscribed(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return Subscription.objects.filter(
+                user=request.user,
+                author=obj
+            ).exists()
+        return False
+
+
+class AvatarSerializer(serializers.ModelSerializer):
+    avatar = Base64ImageField(required=True, allow_null=False)
+
+    class Meta:
+        model = User
+        fields = ('avatar',)
