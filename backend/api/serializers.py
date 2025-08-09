@@ -53,13 +53,12 @@ class SubscriptionSerializer(serializers.ModelSerializer):
     is_subscribed = serializers.SerializerMethodField()
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
-
-    # avatar = serializers.ImageField(source='author.avatar')
+    avatar = serializers.ImageField(source='author.avatar')
 
     class Meta:
         model = Subscription
         fields = ['email', 'id', 'username', 'first_name', 'last_name',
-                  'is_subscribed', 'recipes', 'recipes_count']
+                  'is_subscribed', 'recipes', 'recipes_count', 'avatar']
 
     def get_is_subscribed(self, obj):
         user = self.context['request'].user
