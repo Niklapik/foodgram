@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
+    'django_filters',
     'djoser',
     'recipes.apps.RecipesConfig',
     'users.apps.UsersConfig',
@@ -115,10 +116,10 @@ DJOSER = {
         'user': 'api.serializers.UserSerializer',
         'current_user': 'api.serializers.UserSerializer',
     },
-    # 'PERMISSIONS': {
-    #     'user_list': ['rest_framework.permissions.IsAuthenticatedOrReadOnly'],
-    #     'user': ['rest_framework.permissions.IsAuthenticatedOrReadOnly'],
-    # },
+    'PERMISSIONS': {
+        'user_list': ['rest_framework.permissions.IsAuthenticatedOrReadOnly'],
+        'user': ['rest_framework.permissions.IsAuthenticatedOrReadOnly'],
+    },
 }
 
 LANGUAGE_CODE = 'en-us'

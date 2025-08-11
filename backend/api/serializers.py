@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from rest_framework.exceptions import NotAuthenticated
+
 from recipes.models import Tag, Ingredient, FavoriteRecipe, Recipe, User
 from users.models import Subscription, CustomUser
 from djoser.serializers import UserCreateSerializer as DjoserUserCreateSerializer
@@ -9,7 +11,19 @@ import base64
 from django.core.files.base import ContentFile
 
 
+class Base64ImageField(serializers.ImageField):
+    def to_internal_value(self, data):
+        if isinstance(data, str) and data.startswith('data:image'):
+            format, imgstr = data.split(';base64,')
+            ext = format.split('/')[-1]
+            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
+
+        return super().to_internal_value(data)
+
+
 class RecipeSerializer(serializers.ModelSerializer):
+    image = Base64ImageField(required=True, allow_null=False)
+
     class Meta:
         model = Recipe
         read_only_fields = ('author',)
@@ -74,16 +88,6 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         return Recipe.objects.filter(author=obj.author).count()
 
 
-class Base64ImageField(serializers.ImageField):
-    def to_internal_value(self, data):
-        if isinstance(data, str) and data.startswith('data:image'):
-            format, imgstr = data.split(';base64,')
-            ext = format.split('/')[-1]
-            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
-
-        return super().to_internal_value(data)
-
-
 class UserCreateSerializer(DjoserUserCreateSerializer):
     id = serializers.IntegerField(read_only=True)
     password = serializers.CharField(write_only=True)
@@ -98,8 +102,6 @@ class UserCreateSerializer(DjoserUserCreateSerializer):
 class UserSerializer(serializers.ModelSerializer):
     is_subscribed = serializers.SerializerMethodField()
 
-    # avatar = serializers.ImageField(required=False, allow_null=True)
-
     class Meta:
         model = CustomUser
         fields = ('id', 'email', 'username', 'first_name',
@@ -113,6 +115,11 @@ class UserSerializer(serializers.ModelSerializer):
                 author=obj
             ).exists()
         return False
+
+    def to_representation(self, instance):
+        if not isinstance(instance, User):
+            raise NotAuthenticated('Необходимо авторизоваться.')
+        return super().to_representation(instance)
 
 
 class AvatarSerializer(serializers.ModelSerializer):

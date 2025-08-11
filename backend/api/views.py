@@ -16,8 +16,6 @@ from .serializers import (TagSerializer, IngredientSerializer, RecipeSerializer,
 
 from .permissions import IsAdminOrReadOnly
 
-
-
 from rest_framework.permissions import (
     AllowAny, IsAuthenticatedOrReadOnly, IsAuthenticated
 )
@@ -64,16 +62,19 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = (AllowAny,)
 
 
-class IngredientViewSet(viewsets.ModelViewSet):
+class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     permission_classes = (IsAdminOrReadOnly,)
     pagination_class = None
+    permission_classes = (AllowAny,)
 
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     pagination_class = PageNumberPagination
+
+    # permission_classes = (IsAuthenticated,)
 
     def get_serializer_class(self):
         if self.action == 'create':
