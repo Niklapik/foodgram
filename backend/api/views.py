@@ -10,9 +10,9 @@ from djoser.views import UserViewSet as DjoserUserViewSet
 from recipes.models import Tag, Ingredient, FavoriteRecipe, Recipe, User
 from users.models import Subscription
 
-from .serializers import (TagSerializer, IngredientSerializer, RecipeSerializer,
-                          SubscriptionSerializer, UserSerializer, FavoriteRecipeSerializer, UserCreateSerializer,
-                          AvatarSerializer)
+from .serializers import (TagSerializer, IngredientSerializer, RecipeSerializer, RecipePostSerializer,
+                          SubscriptionSerializer, UserSerializer, UserCreateSerializer,
+                          AvatarSerializer, PostFavoriteRecipeSerializer)
 
 from .permissions import IsAdminOrReadOnly
 
@@ -23,34 +23,41 @@ from rest_framework.permissions import (
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
-    serializer_class = RecipeSerializer
+    pagination_class = PageNumberPagination
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+    def get_serializer_class(self):
+        if self.action in ['create', 'update', 'partial_update']:
+            return RecipePostSerializer
+        return RecipeSerializer
 
-    @action(detail=True, methods=['post', 'delete'])
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.select_related('author')
+        queryset = queryset.prefetch_related('tags', 'ingredients')
+        return queryset
+
+    @action(detail=True, methods=['post', 'delete'], permission_classes=[IsAuthenticated])
     def favorite(self, request, pk=None):
-        recipe = self.get_object()
+        recipe = get_object_or_404(Recipe, pk=pk)
         user = request.user
 
         if request.method == 'POST':
             if FavoriteRecipe.objects.filter(user=user, recipe=recipe).exists():
                 return Response(
-                    {"error": "Рецепт уже в избранном"},
+                    {'errors': 'Рецепт уже в избранном'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-
-            favorite_recipes = user.favorite_recipes.create(recipe=recipe)
-            serializer = FavoriteRecipeSerializer(favorite_recipes)
+            FavoriteRecipe.objects.create(user=user, recipe=recipe)
+            serializer = PostFavoriteRecipeSerializer(recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-
 
         elif request.method == 'DELETE':
             deleted, _ = FavoriteRecipe.objects.filter(user=user, recipe=recipe).delete()
-            if not deleted:
+            if deleted == 0:
                 return Response(
-                    {"error": "Рецепт не был в избранном"},
-                    status=status.HTTP_404_NOT_FOUND
+                    {'errors': 'Рецепта не было в избранном'},
+                    status=status.HTTP_400_BAD_REQUEST
                 )
             return Response(status=status.HTTP_204_NO_CONTENT)
 

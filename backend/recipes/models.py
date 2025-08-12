@@ -16,7 +16,7 @@ class Tag(models.Model):
                             max_length=SLUG_MAX_LENGTH, verbose_name='Идентификатор')
 
     def __str__(self):
-        return self.title
+        return self.name
 
 
 class Ingredient(models.Model):
@@ -27,7 +27,7 @@ class Ingredient(models.Model):
                                         max_length=UNIT_MAX_LENGTH, verbose_name='Название единицы измерения')
 
     def __str__(self):
-        return self.title
+        return self.name
 
 
 class Recipe(models.Model):
@@ -59,7 +59,7 @@ class Recipe(models.Model):
 class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='recipe_ingredients')
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE, related_name='ingredient_recipes')
-    quantity = models.DecimalField(max_digits=8, decimal_places=2, verbose_name='Количество')
+    amount = models.PositiveSmallIntegerField(verbose_name='Количество')
     unit = models.CharField(max_length=UNIT_MAX_LENGTH, verbose_name='Название единицы измерения')
 
     class Meta:
