@@ -7,12 +7,12 @@ from rest_framework import permissions
 from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet as DjoserUserViewSet
 
-from recipes.models import Tag, Ingredient, FavoriteRecipe, Recipe, User
+from recipes.models import Tag, Ingredient, FavoriteRecipe, Recipe, User, ShoppingCart
 from users.models import Subscription
 
 from .serializers import (TagSerializer, IngredientSerializer, RecipeSerializer, RecipePostSerializer,
                           SubscriptionSerializer, UserSerializer, UserCreateSerializer,
-                          AvatarSerializer, PostFavoriteRecipeSerializer)
+                          AvatarSerializer, PostFavoriteRecipeSerializer, ShoppingCartSerializer)
 
 from .permissions import IsAdminOrReadOnly
 
@@ -60,6 +60,59 @@ class RecipeViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=['post', 'delete'], permission_classes=[IsAuthenticated])
+    def shopping_cart(self, request, pk=None):
+        recipe = get_object_or_404(Recipe, pk=pk)
+        user = request.user
+
+        if request.method == 'POST':
+            if ShoppingCart.objects.filter(user=user, recipe=recipe).exists():
+                return Response(
+                    {'errors': 'Рецепт уже в списке покупок'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            ShoppingCart.objects.create(user=user, recipe=recipe)
+            serializer = ShoppingCartSerializer(recipe)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        elif request.method == 'DELETE':
+            deleted = ShoppingCart.objects.filter(
+                user=user,
+                recipe=recipe
+            ).delete()
+            if deleted[0] == 0:
+                return Response(
+                    {'errors': 'Рецепта не было в списке покупок'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def download_shopping_cart(self, request):
+        shopping_cart = ShoppingCart.objects.filter(user=request.user)
+        recipes = [item.recipe for item in shopping_cart]
+
+        ingredients = {}
+        for recipe in recipes:
+            for ri in recipe.recipe_ingredients.all():
+                key = (ri.ingredient.name, ri.ingredient.measurement_unit)
+                if key in ingredients:
+                    ingredients[key] += ri.amount
+                else:
+                    ingredients[key] = ri.amount
+
+        lines = []
+        for (name, unit), amount in ingredients.items():
+            lines.append(f"{name} - {amount} {unit}")
+
+        text_content = "Список покупок:\n\n" + "\n".join(lines)
+        text_content += f"\n\nВсего ингредиентов: {len(ingredients)}"
+
+        from django.http import HttpResponse
+        response = HttpResponse(text_content, content_type='text/plain')
+        response['Content-Disposition'] = 'attachment; filename="shopping_list.txt"'
+        return response
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
