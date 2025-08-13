@@ -3,6 +3,9 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework import permissions
+from rest_framework.exceptions import PermissionDenied
+
+from rest_framework.request import Request
 
 from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet as DjoserUserViewSet
@@ -26,8 +29,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
     pagination_class = PageNumberPagination
     permission_classes = [IsAuthenticatedOrReadOnly]
 
+    # filter_backends = (DjangoFilterBackend,)
+
     def get_serializer_class(self):
-        if self.action in ['create', 'update', 'partial_update']:
+        if self.action in ['create', 'partial_update']:
             return RecipePostSerializer
         return RecipeSerializer
 
@@ -36,6 +41,23 @@ class RecipeViewSet(viewsets.ModelViewSet):
         queryset = queryset.select_related('author')
         queryset = queryset.prefetch_related('tags', 'ingredients')
         return queryset
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        if instance.author != request.user:
+            raise PermissionDenied("Вы не являетесь автором этого рецепта")
+
+        return super().update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()  # Получаем рецепт
+
+        if instance.author != request.user:
+            raise PermissionDenied("Вы не являетесь автором этого рецепта")
+
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['post', 'delete'], permission_classes=[IsAuthenticated])
     def favorite(self, request, pk=None):
@@ -113,6 +135,24 @@ class RecipeViewSet(viewsets.ModelViewSet):
         response = HttpResponse(text_content, content_type='text/plain')
         response['Content-Disposition'] = 'attachment; filename="shopping_list.txt"'
         return response
+
+    @action(detail=True, methods=['GET'], url_path='get-link')
+    def get_short_link(self, request: Request, pk: int):
+        try:
+            recipe: Recipe = self.get_object()
+        except Recipe.DoesNotExist:
+            return Response(
+                {'message': 'Не существует такой записи'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        scheme = request.scheme
+        host = request.get_host()
+        domain = f'{scheme}://{host}'
+        return Response(
+            {'short-link': f'{domain}/s/{recipe.id}'},
+            status=status.HTTP_200_OK
+        )
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):

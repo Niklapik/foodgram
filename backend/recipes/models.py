@@ -3,7 +3,7 @@ from django.db import models
 
 User = get_user_model()
 
-NAME_MAX_LENGTH = 40
+NAME_MAX_LENGTH = 80
 SLUG_MAX_LENGTH = 50
 UNIT_MAX_LENGTH = 20
 
