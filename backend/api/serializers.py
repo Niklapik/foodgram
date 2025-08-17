@@ -21,16 +21,6 @@ class Base64ImageField(serializers.ImageField):
         return super().to_internal_value(data)
 
 
-# class FavoriteRecipeSerializer(serializers.ModelSerializer):
-#     name = serializers.CharField(source='recipe.name', read_only=True)
-#     cooking_time = serializers.IntegerField(source='recipe.cooking_time', read_only=True)
-#     image = serializers.ImageField(source='recipe.image', read_only=True)
-#
-#     class Meta:
-#         model = Recipe
-#         fields = ['id', 'name', 'image', 'cooking_time']
-
-
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
@@ -72,8 +62,17 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         return user.subscriptions.filter(author=obj.author).exists()
 
     def get_recipes(self, obj):
-        recipes = Recipe.objects.filter(author=obj.author)
-        return ShortRecipeSerializer(recipes, many=True).data
+        request = self.context.get('request')
+        recipes = obj.author.recipes.all().order_by('-id')
+
+        try:
+            recipes_limit = int(request.query_params.get('recipes_limit', 0))
+            if recipes_limit > 0:
+                recipes = recipes[:recipes_limit]
+        except (ValueError, TypeError):
+            pass
+
+        return ShortRecipeSerializer(recipes, many=True, context={'request': request}).data
 
     def get_recipes_count(self, obj):
         return Recipe.objects.filter(author=obj.author).count()

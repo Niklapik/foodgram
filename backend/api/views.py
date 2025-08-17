@@ -23,13 +23,18 @@ from rest_framework.permissions import (
     AllowAny, IsAuthenticatedOrReadOnly, IsAuthenticated
 )
 
+from django_filters.rest_framework import DjangoFilterBackend
+
+from .paginators import CustomPagination
+from .filters import RecipeFilter, IngredientFilter
+
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
-    pagination_class = PageNumberPagination
+    pagination_class = CustomPagination
     permission_classes = [IsAuthenticatedOrReadOnly]
-
-    # filter_backends = (DjangoFilterBackend,)
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = RecipeFilter
 
     def get_serializer_class(self):
         if self.action in ['create', 'partial_update']:
@@ -168,11 +173,14 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = (IsAdminOrReadOnly,)
     pagination_class = None
     permission_classes = (AllowAny,)
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = IngredientFilter
 
 
 class UserViewSet(DjoserUserViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    pagination_class = CustomPagination
 
     @action(detail=False, methods=['get'], url_path='subscriptions')
     def subscriptions(self, request):
