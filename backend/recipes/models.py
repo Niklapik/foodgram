@@ -18,6 +18,10 @@ class Tag(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        verbose_name = 'Тег'
+        verbose_name_plural = 'Теги'
+
 
 class Ingredient(models.Model):
     name = models.CharField(blank=False, null=False,
@@ -28,6 +32,10 @@ class Ingredient(models.Model):
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        verbose_name = 'Ингредиент'
+        verbose_name_plural = 'Ингредиенты'
 
 
 class Recipe(models.Model):
@@ -51,6 +59,13 @@ class Recipe(models.Model):
     cooking_time = models.PositiveIntegerField(blank=False, null=False,
                                                verbose_name='Время приготовления в мин.')
 
+    def __str__(self):
+        return f'{self.author}: {self.name}'
+
+    class Meta:
+        verbose_name = 'Рецепт'
+        verbose_name_plural = 'Рецепты'
+
 
 class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='recipe_ingredients')
@@ -58,31 +73,34 @@ class RecipeIngredient(models.Model):
     amount = models.PositiveSmallIntegerField(verbose_name='Количество')
     unit = models.CharField(max_length=UNIT_MAX_LENGTH, verbose_name='Название единицы измерения')
 
+    def __str__(self):
+        return f'{self.quantity} {self.unit} {self.ingredient.title}'
+
     class Meta:
         verbose_name = 'Ингредиент рецепта'
         verbose_name_plural = 'Ингредиенты рецепта'
-
-    def __str__(self):
-        return f'{self.quantity} {self.unit} {self.ingredient.title}'
 
 
 class FavoriteRecipe(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorite_recipes')
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='favorited_by')
 
+    def __str__(self):
+        return f'{self.user.username} добавил в избранное {self.recipe.title}'
+
     class Meta:
         unique_together = ('user', 'recipe')
         verbose_name = 'Избранный рецепт'
         verbose_name_plural = 'Избранные рецепты'
-
-    def __str__(self):
-        return f'{self.user.username} добавил в избранное {self.recipe.title}'
 
 
 class ShoppingCart(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='shopping_carts', verbose_name='Пользователь')
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='in_shopping_carts',
                                verbose_name='Рецепт')
+
+    def __str__(self):
+        return f'{self.user.username} - {self.recipe.name}'
 
     class Meta:
         verbose_name = 'Список покупок'
@@ -93,6 +111,3 @@ class ShoppingCart(models.Model):
                 name='unique_shopping_cart'
             )
         ]
-
-    def __str__(self):
-        return f'{self.user.username} - {self.recipe.name}'
