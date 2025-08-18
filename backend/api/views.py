@@ -1,32 +1,26 @@
-from rest_framework import viewsets, status
-from rest_framework.response import Response
-from rest_framework.decorators import action
-from rest_framework.pagination import PageNumberPagination
-from rest_framework import permissions
-from rest_framework.exceptions import PermissionDenied
-
-from rest_framework.request import Request
-
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet as DjoserUserViewSet
 
-from recipes.models import Tag, Ingredient, FavoriteRecipe, Recipe, User, ShoppingCart
-from users.models import Subscription
-
-from .serializers import (TagSerializer, IngredientSerializer, RecipeSerializer, RecipePostSerializer,
-                          SubscriptionSerializer, UserSerializer, UserCreateSerializer,
-                          AvatarSerializer, PostFavoriteRecipeSerializer, ShoppingCartSerializer)
-
-from .permissions import IsAdminOrReadOnly
-
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import (
-    AllowAny, IsAuthenticatedOrReadOnly, IsAuthenticated
+    AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 )
+from rest_framework.request import Request
+from rest_framework.response import Response
 
-from django_filters.rest_framework import DjangoFilterBackend
-
+from recipes.models import FavoriteRecipe, Ingredient, Recipe, ShoppingCart, Tag, User
+from users.models import Subscription
+from .filters import IngredientFilter, RecipeFilter
 from .paginators import CustomPagination
-from .filters import RecipeFilter, IngredientFilter
+from .permissions import IsAdminOrReadOnly
+from .serializers import (
+    AvatarSerializer, IngredientSerializer, PostFavoriteRecipeSerializer,
+    RecipePostSerializer, RecipeSerializer, ShoppingCartSerializer,
+    SubscriptionSerializer, TagSerializer, UserCreateSerializer, UserSerializer
+)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -56,7 +50,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return super().update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()  # Получаем рецепт
+        instance = self.get_object()
 
         if instance.author != request.user:
             raise PermissionDenied("Вы не являетесь автором этого рецепта")

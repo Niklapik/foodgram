@@ -1,14 +1,12 @@
-from rest_framework import serializers
-
-from rest_framework.exceptions import NotAuthenticated
-
-from recipes.models import Tag, Ingredient, FavoriteRecipe, Recipe, User, RecipeIngredient
-from users.models import Subscription, CustomUser
-from djoser.serializers import UserCreateSerializer as DjoserUserCreateSerializer
-
 import base64
 
 from django.core.files.base import ContentFile
+from djoser.serializers import UserCreateSerializer as DjoserUserCreateSerializer
+from rest_framework import serializers
+from rest_framework.exceptions import NotAuthenticated
+
+from recipes.models import FavoriteRecipe, Ingredient, Recipe, RecipeIngredient, Tag, User
+from users.models import CustomUser, Subscription
 
 
 class Base64ImageField(serializers.ImageField):
