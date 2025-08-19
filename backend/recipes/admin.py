@@ -20,7 +20,7 @@ class IngredientAdmin(admin.ModelAdmin):
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
     list_display = ('name', 'slug',)
-    list_editable = ('name', 'slug',)
+    list_editable = ('slug',)
     search_fields = ('name', 'slug',)
     list_filter = ('name', 'slug',)
 
@@ -28,7 +28,7 @@ class TagAdmin(admin.ModelAdmin):
 @admin.register(FavoriteRecipe)
 class FavoriteRecipeAdmin(admin.ModelAdmin):
     list_display = ('user', 'recipe',)
-    list_editable = ('user', 'recipe',)
+    list_editable = ('recipe',)
     search_fields = ('user', 'recipe',)
     list_filter = ('user', 'recipe',)
 
@@ -36,6 +36,6 @@ class FavoriteRecipeAdmin(admin.ModelAdmin):
 @admin.register(ShoppingCart)
 class ShoppingCartAdmin(admin.ModelAdmin):
     list_display = ('user', 'recipe',)
-    list_editable = ('user', 'recipe',)
+    list_editable = ('recipe',)
     search_fields = ('user', 'recipe',)
     list_filter = ('user', 'recipe',)

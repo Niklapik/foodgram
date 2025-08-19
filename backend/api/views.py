@@ -1,7 +1,7 @@
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet as DjoserUserViewSet
-
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
@@ -130,7 +130,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         text_content = "Список покупок:\n\n" + "\n".join(lines)
         text_content += f"\n\nВсего ингредиентов: {len(ingredients)}"
 
-        from django.http import HttpResponse
         response = HttpResponse(text_content, content_type='text/plain')
         response['Content-Disposition'] = 'attachment; filename="shopping_list.txt"'
         return response
