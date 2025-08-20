@@ -11,7 +11,8 @@ from rest_framework.permissions import (
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from recipes.models import FavoriteRecipe, Ingredient, Recipe, ShoppingCart, Tag, User
+from recipes.models import (FavoriteRecipe, Ingredient, Recipe,
+                            ShoppingCart, Tag, User)
 from users.models import Subscription
 from .filters import IngredientFilter, RecipeFilter
 from .paginators import CustomPagination
@@ -19,7 +20,7 @@ from .permissions import IsAdminOrReadOnly
 from .serializers import (
     AvatarSerializer, IngredientSerializer, PostFavoriteRecipeSerializer,
     RecipePostSerializer, RecipeSerializer, ShoppingCartSerializer,
-    SubscriptionSerializer, TagSerializer, UserCreateSerializer, UserSerializer
+    SubscriptionSerializer, TagSerializer, UserSerializer
 )
 
 
@@ -58,13 +59,15 @@ class RecipeViewSet(viewsets.ModelViewSet):
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=True, methods=['post', 'delete'], permission_classes=[IsAuthenticated])
+    @action(detail=True, methods=['post', 'delete'],
+            permission_classes=[IsAuthenticated])
     def favorite(self, request, pk=None):
         recipe = get_object_or_404(Recipe, pk=pk)
         user = request.user
 
         if request.method == 'POST':
-            if FavoriteRecipe.objects.filter(user=user, recipe=recipe).exists():
+            if FavoriteRecipe.objects.filter(user=user,
+                                             recipe=recipe).exists():
                 return Response(
                     {'errors': 'Рецепт уже в избранном'},
                     status=status.HTTP_400_BAD_REQUEST
@@ -74,7 +77,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         elif request.method == 'DELETE':
-            deleted, _ = FavoriteRecipe.objects.filter(user=user, recipe=recipe).delete()
+            deleted, _ = FavoriteRecipe.objects.filter(user=user,
+                                                       recipe=recipe).delete()
             if deleted == 0:
                 return Response(
                     {'errors': 'Рецепта не было в избранном'},
@@ -82,7 +86,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 )
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=True, methods=['post', 'delete'], permission_classes=[IsAuthenticated])
+    @action(detail=True, methods=['post', 'delete'],
+            permission_classes=[IsAuthenticated])
     def shopping_cart(self, request, pk=None):
         recipe = get_object_or_404(Recipe, pk=pk)
         user = request.user
@@ -109,7 +114,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 )
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    @action(detail=False, methods=['get'],
+            permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
         shopping_cart = ShoppingCart.objects.filter(user=request.user)
         recipes = [item.recipe for item in shopping_cart]
@@ -131,7 +137,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
         text_content += f"\n\nВсего ингредиентов: {len(ingredients)}"
 
         response = HttpResponse(text_content, content_type='text/plain')
-        response['Content-Disposition'] = 'attachment; filename="shopping_list.txt"'
+        response['Content-Disposition'] = (
+            'attachment; filename="shopping_list.txt"'
+        )
         return response
 
     @action(detail=True, methods=['GET'], url_path='get-link')
@@ -181,10 +189,12 @@ class UserViewSet(DjoserUserViewSet):
         page = self.paginate_queryset(subscriptions)
 
         if page is not None:
-            serializer = SubscriptionSerializer(page, many=True, context={'request': request})
+            serializer = SubscriptionSerializer(page, many=True,
+                                                context={'request': request})
             return self.get_paginated_response(serializer.data)
 
-        serializer = SubscriptionSerializer(subscriptions, many=True, context={'request': request})
+        serializer = SubscriptionSerializer(subscriptions, many=True,
+                                            context={'request': request})
         return Response(serializer.data)
 
     @action(detail=True, methods=['post', 'delete'], url_path='subscribe')
@@ -199,12 +209,17 @@ class UserViewSet(DjoserUserViewSet):
             )
 
         if request.method == 'POST':
-            subscription, created = Subscription.objects.get_or_create(user=user, author=author)
+            subscription, created = Subscription.objects.get_or_create(
+                user=user,
+                author=author
+            )
             if not created:
-                return Response({'detail': 'Вы уже подписаны на этого пользователя.'},
-                                status=status.HTTP_400_BAD_REQUEST
-                                )
-            serializer = SubscriptionSerializer(subscription, context={'request': request})
+                return Response(
+                    {'detail': 'Вы уже подписаны на этого пользователя.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            serializer = SubscriptionSerializer(subscription,
+                                                context={'request': request})
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         elif request.method == 'DELETE':
@@ -231,7 +246,8 @@ class UserViewSet(DjoserUserViewSet):
 
         elif request.method == 'DELETE':
             if not user.avatar:
-                return Response({"error": "Аватар не установлен"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "Аватар не установлен"},
+                                status=status.HTTP_400_BAD_REQUEST)
 
             user.avatar.delete()
             user.avatar = None
