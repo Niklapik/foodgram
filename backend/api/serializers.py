@@ -10,6 +10,8 @@ from rest_framework.exceptions import NotAuthenticated
 from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag, User
 from users.models import CustomUser, Subscription
 
+NAME_MAX_LENGTH = 150
+
 
 class Base64ImageField(serializers.ImageField):
     def to_internal_value(self, data):
@@ -36,7 +38,7 @@ class IngredientSerializer(serializers.ModelSerializer):
 class ShortRecipeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
-        fields = ['id', 'name', 'image', 'cooking_time']
+        fields = ('id', 'name', 'image', 'cooking_time',)
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):
@@ -52,8 +54,8 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Subscription
-        fields = ['email', 'id', 'username', 'first_name', 'last_name',
-                  'is_subscribed', 'recipes', 'recipes_count', 'avatar']
+        fields = ('email', 'id', 'username', 'first_name', 'last_name',
+                  'is_subscribed', 'recipes', 'recipes_count', 'avatar')
 
     def get_is_subscribed(self, obj):
         user = self.context['request'].user
@@ -82,8 +84,10 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 class UserCreateSerializer(DjoserUserCreateSerializer):
     id = serializers.IntegerField(read_only=True)
     password = serializers.CharField(write_only=True)
-    first_name = serializers.CharField(required=True, max_length=150)
-    last_name = serializers.CharField(required=True, max_length=150)
+    first_name = serializers.CharField(required=True,
+                                       max_length=NAME_MAX_LENGTH)
+    last_name = serializers.CharField(required=True,
+                                      max_length=NAME_MAX_LENGTH)
 
     class Meta:
         model = CustomUser
@@ -190,8 +194,7 @@ class RecipePostSerializer(serializers.ModelSerializer):
                 code='empty_tags'
             )
 
-        # Проверка на дубликаты тегов
-        if len(value) != len(set(tag.id for tag in value)):
+        if len(value) != len(set(value)):
             raise serializers.ValidationError(
                 "Теги не должны повторяться",
                 code='duplicate_tags'
@@ -208,7 +211,6 @@ class RecipePostSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, data):
-        # Общая валидация
         if 'recipe_ingredients' not in data or not data['recipe_ingredients']:
             raise serializers.ValidationError(
                 {"ingredients": "Необходимо указать хотя бы один ингредиент"},

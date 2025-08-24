@@ -1,10 +1,8 @@
-from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet as DjoserUserViewSet
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import (
     AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 )
@@ -16,19 +14,20 @@ from recipes.models import (FavoriteRecipe, Ingredient, Recipe,
 from users.models import Subscription
 from .filters import IngredientFilter, RecipeFilter
 from .paginators import CustomPagination
-from .permissions import IsAdminOrReadOnly
+from .permissions import IsAdminOrReadOnly, IsAuthorOrReadOnly
 from .serializers import (
     AvatarSerializer, IngredientSerializer, PostFavoriteRecipeSerializer,
     RecipePostSerializer, RecipeSerializer, ShoppingCartSerializer,
     SubscriptionSerializer, TagSerializer, UserSerializer
 )
+from .utils import create_shopping_list
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     pagination_class = CustomPagination
-    permission_classes = [IsAuthenticatedOrReadOnly]
-    filter_backends = [DjangoFilterBackend]
+    permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly,)
+    filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
 
     def get_serializer_class(self):
@@ -41,23 +40,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         queryset = queryset.select_related('author')
         queryset = queryset.prefetch_related('tags', 'ingredients')
         return queryset
-
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-
-        if instance.author != request.user:
-            raise PermissionDenied("Вы не являетесь автором этого рецепта")
-
-        return super().update(request, *args, **kwargs)
-
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-
-        if instance.author != request.user:
-            raise PermissionDenied("Вы не являетесь автором этого рецепта")
-
-        self.perform_destroy(instance)
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['post', 'delete'],
             permission_classes=[IsAuthenticated])
@@ -107,7 +89,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 user=user,
                 recipe=recipe
             ).delete()
-            if deleted[0] == 0:
+            if not deleted[0]:
                 return Response(
                     {'errors': 'Рецепта не было в списке покупок'},
                     status=status.HTTP_400_BAD_REQUEST
@@ -119,28 +101,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def download_shopping_cart(self, request):
         shopping_cart = ShoppingCart.objects.filter(user=request.user)
         recipes = [item.recipe for item in shopping_cart]
-
-        ingredients = {}
-        for recipe in recipes:
-            for ri in recipe.recipe_ingredients.all():
-                key = (ri.ingredient.name, ri.ingredient.measurement_unit)
-                if key in ingredients:
-                    ingredients[key] += ri.amount
-                else:
-                    ingredients[key] = ri.amount
-
-        lines = []
-        for (name, unit), amount in ingredients.items():
-            lines.append(f"{name} - {amount} {unit}")
-
-        text_content = "Список покупок:\n\n" + "\n".join(lines)
-        text_content += f"\n\nВсего ингредиентов: {len(ingredients)}"
-
-        response = HttpResponse(text_content, content_type='text/plain')
-        response['Content-Disposition'] = (
-            'attachment; filename="shopping_list.txt"'
-        )
-        return response
+        return create_shopping_list(recipes)
 
     @action(detail=True, methods=['GET'], url_path='get-link')
     def get_short_link(self, request: Request, pk: int):
@@ -156,7 +117,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         host = request.get_host()
         domain = f'{scheme}://{host}'
         return Response(
-            {'short-link': f'{domain}/s/{recipe.id}'},
+            {'short-link': f'{domain}/recipes/{recipe.id}'},
             status=status.HTTP_200_OK
         )
 
@@ -174,7 +135,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = (IsAdminOrReadOnly,)
     pagination_class = None
     permission_classes = (AllowAny,)
-    filter_backends = [DjangoFilterBackend]
+    filter_backends = (DjangoFilterBackend,)
     filterset_class = IngredientFilter
 
 

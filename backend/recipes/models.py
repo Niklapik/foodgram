@@ -9,11 +9,11 @@ UNIT_MAX_LENGTH = 20
 
 
 class Tag(models.Model):
-    name = models.CharField(unique=True, blank=False, null=False,
+    name = models.CharField(unique=True,
                             max_length=NAME_MAX_LENGTH,
                             verbose_name='Название тега')
 
-    slug = models.SlugField(unique=True, blank=False, null=False,
+    slug = models.SlugField(unique=True,
                             max_length=SLUG_MAX_LENGTH,
                             verbose_name='Идентификатор')
 
@@ -26,12 +26,10 @@ class Tag(models.Model):
 
 
 class Ingredient(models.Model):
-    name = models.CharField(blank=False, null=False,
-                            max_length=NAME_MAX_LENGTH,
+    name = models.CharField(max_length=NAME_MAX_LENGTH,
                             verbose_name='Название ингредиента')
 
     measurement_unit = models.CharField(
-        blank=False, null=False,
         max_length=UNIT_MAX_LENGTH,
         verbose_name='Название единицы измерения')
 
@@ -44,32 +42,28 @@ class Ingredient(models.Model):
 
 
 class Recipe(models.Model):
-    author = models.ForeignKey(User, blank=False, null=False,
+    author = models.ForeignKey(User,
                                on_delete=models.CASCADE,
                                related_name='recipes',
                                verbose_name='Автор рецепта', )
 
-    name = models.CharField(blank=False, null=False,
-                            max_length=NAME_MAX_LENGTH,
+    name = models.CharField(max_length=NAME_MAX_LENGTH,
                             verbose_name='Название рецепта')
 
-    image = models.ImageField(blank=False, null=False,
-                              verbose_name='Картинка',
+    image = models.ImageField(verbose_name='Картинка',
                               upload_to='recipe_pictures')
 
-    text = models.TextField(blank=False, null=False,
-                            verbose_name='Описание рецепта')
+    text = models.TextField(verbose_name='Описание рецепта')
 
-    ingredients = models.ManyToManyField(Ingredient, blank=False,
+    ingredients = models.ManyToManyField(Ingredient,
                                          through='RecipeIngredient',
                                          related_name='recipes',
                                          verbose_name='Ингредиенты')
 
-    tags = models.ManyToManyField(Tag, blank=False, related_name='recipes',
+    tags = models.ManyToManyField(Tag, related_name='recipes',
                                   verbose_name='Теги')
 
     cooking_time = models.PositiveIntegerField(
-        blank=False, null=False,
         verbose_name='Время приготовления в мин.')
 
     def __str__(self):
