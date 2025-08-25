@@ -1,11 +1,9 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 
-User = get_user_model()
+from api.constants import NAME_MAX_LENGTH, UNIT_MAX_LENGTH, SLUG_MAX_LENGTH
 
-NAME_MAX_LENGTH = 80
-SLUG_MAX_LENGTH = 50
-UNIT_MAX_LENGTH = 20
+User = get_user_model()
 
 
 class Tag(models.Model):

@@ -24,25 +24,24 @@ from .utils import create_shopping_list
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    queryset = Recipe.objects.all()
     pagination_class = CustomPagination
     permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
 
     def get_serializer_class(self):
-        if self.action in ['create', 'partial_update']:
+        if self.action in ('create', 'partial_update'):
             return RecipePostSerializer
         return RecipeSerializer
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = Recipe.objects.all()
         queryset = queryset.select_related('author')
         queryset = queryset.prefetch_related('tags', 'ingredients')
         return queryset
 
-    @action(detail=True, methods=['post', 'delete'],
-            permission_classes=[IsAuthenticated])
+    @action(detail=True, methods=('post', 'delete'),
+            permission_classes=(IsAuthenticated,))
     def favorite(self, request, pk=None):
         recipe = get_object_or_404(Recipe, pk=pk)
         user = request.user
@@ -61,15 +60,15 @@ class RecipeViewSet(viewsets.ModelViewSet):
         elif request.method == 'DELETE':
             deleted, _ = FavoriteRecipe.objects.filter(user=user,
                                                        recipe=recipe).delete()
-            if deleted == 0:
+            if not deleted:
                 return Response(
                     {'errors': 'Рецепта не было в избранном'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=True, methods=['post', 'delete'],
-            permission_classes=[IsAuthenticated])
+    @action(detail=True, methods=('post', 'delete'),
+            permission_classes=(IsAuthenticated,))
     def shopping_cart(self, request, pk=None):
         recipe = get_object_or_404(Recipe, pk=pk)
         user = request.user
@@ -85,25 +84,25 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         elif request.method == 'DELETE':
-            deleted = ShoppingCart.objects.filter(
+            deleted, _ = ShoppingCart.objects.filter(
                 user=user,
                 recipe=recipe
             ).delete()
-            if not deleted[0]:
+            if not deleted:
                 return Response(
                     {'errors': 'Рецепта не было в списке покупок'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=False, methods=['get'],
-            permission_classes=[IsAuthenticated])
+    @action(detail=False, methods=('get',),
+            permission_classes=(IsAuthenticated,))
     def download_shopping_cart(self, request):
         shopping_cart = ShoppingCart.objects.filter(user=request.user)
         recipes = [item.recipe for item in shopping_cart]
         return create_shopping_list(recipes)
 
-    @action(detail=True, methods=['GET'], url_path='get-link')
+    @action(detail=True, methods=('GET',), url_path='get-link')
     def get_short_link(self, request: Request, pk: int):
         try:
             recipe: Recipe = self.get_object()
@@ -144,7 +143,7 @@ class UserViewSet(DjoserUserViewSet):
     serializer_class = UserSerializer
     pagination_class = CustomPagination
 
-    @action(detail=False, methods=['get'], url_path='subscriptions')
+    @action(detail=False, methods=('get',), url_path='subscriptions')
     def subscriptions(self, request):
         subscriptions = Subscription.objects.filter(user=request.user)
         page = self.paginate_queryset(subscriptions)
@@ -158,7 +157,7 @@ class UserViewSet(DjoserUserViewSet):
                                             context={'request': request})
         return Response(serializer.data)
 
-    @action(detail=True, methods=['post', 'delete'], url_path='subscribe')
+    @action(detail=True, methods=('post', 'delete'), url_path='subscribe')
     def subscribe(self, request, id=None):
         user = request.user
         author = get_object_or_404(self.queryset, pk=id)
@@ -195,7 +194,7 @@ class UserViewSet(DjoserUserViewSet):
                 )
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=False, methods=['put', 'delete'], url_path='me/avatar')
+    @action(detail=False, methods=('put', 'delete'), url_path='me/avatar')
     def avatar(self, request):
         user = request.user
 

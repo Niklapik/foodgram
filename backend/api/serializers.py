@@ -9,8 +9,7 @@ from rest_framework.exceptions import NotAuthenticated
 
 from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag, User
 from users.models import CustomUser, Subscription
-
-NAME_MAX_LENGTH = 150
+from .constants import LIMIT_COOKING_TIME, LIMIT_INGREDIENTS, NAME_MAX_LENGTH
 
 
 class Base64ImageField(serializers.ImageField):
@@ -168,7 +167,6 @@ class RecipePostSerializer(serializers.ModelSerializer):
                 code='empty_ingredients'
             )
 
-        # Проверка на дубликаты ингредиентов
         ingredient_ids = [item['ingredient'].id for item in value]
         if len(ingredient_ids) != len(set(ingredient_ids)):
             raise serializers.ValidationError(
@@ -176,12 +174,11 @@ class RecipePostSerializer(serializers.ModelSerializer):
                 code='duplicate_ingredients'
             )
 
-        # Проверка количества ингредиентов
         for item in value:
-            if item['amount'] < 1:
+            if item['amount'] < LIMIT_INGREDIENTS:
                 raise serializers.ValidationError(
                     f"Количество ингредиента {item['ingredient'].name} "
-                    f"должно быть не меньше 1",
+                    f"должно быть не меньше {LIMIT_INGREDIENTS}",
                     code='invalid_amount'
                 )
 
@@ -203,9 +200,9 @@ class RecipePostSerializer(serializers.ModelSerializer):
         return value
 
     def validate_cooking_time(self, value):
-        if value < 1:
+        if value < LIMIT_COOKING_TIME:
             raise serializers.ValidationError(
-                "Время приготовления должно быть не меньше 1 минуты",
+                f"Время приготовления должно быть не меньше 1 минуты",
                 code='invalid_cooking_time'
             )
         return value
