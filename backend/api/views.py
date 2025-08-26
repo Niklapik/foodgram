@@ -16,7 +16,7 @@ from .filters import IngredientFilter, RecipeFilter
 from .paginators import CustomPagination
 from .permissions import IsAdminOrReadOnly, IsAuthorOrReadOnly
 from .serializers import (
-    AvatarSerializer, IngredientSerializer, PostFavoriteRecipeSerializer,
+    AvatarSerializer, FavoriteRecipeSerializer, IngredientSerializer, PostFavoriteRecipeSerializer,
     RecipePostSerializer, RecipeSerializer, ShoppingCartSerializer,
     SubscriptionSerializer, TagSerializer, UserSerializer
 )
@@ -50,24 +50,26 @@ class RecipeViewSet(viewsets.ModelViewSet):
         user = request.user
 
         if request.method == 'POST':
-            if FavoriteRecipe.objects.filter(user=user,
-                                             recipe=recipe).exists():
-                return Response(
-                    {'errors': 'Рецепт уже в избранном'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            FavoriteRecipe.objects.create(user=user, recipe=recipe)
-            serializer = PostFavoriteRecipeSerializer(recipe)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            serializer = FavoriteRecipeSerializer(
+                data={'recipe': recipe.id},
+                context={'request': request}
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save(user=user)
+
+            recipe_serializer = PostFavoriteRecipeSerializer(
+                recipe,
+                context={'request': request}
+            )
+            return Response(recipe_serializer.data, status=status.HTTP_201_CREATED)
 
         elif request.method == 'DELETE':
-            deleted, _ = FavoriteRecipe.objects.filter(user=user,
-                                                       recipe=recipe).delete()
-            if not deleted:
+            if not FavoriteRecipe.objects.filter(user=user, recipe=recipe).exists():
                 return Response(
                     {'errors': 'Рецепта не было в избранном'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
+            FavoriteRecipe.objects.filter(user=user, recipe=recipe).delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=('post', 'delete'),

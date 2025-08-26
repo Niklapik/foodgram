@@ -7,7 +7,7 @@ from djoser.serializers import (
 from rest_framework import serializers
 from rest_framework.exceptions import NotAuthenticated
 
-from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
+from recipes.models import FavoriteRecipe, Ingredient, Recipe, RecipeIngredient, Tag
 from users.models import Subscription, User
 from .constants import LIMIT_COOKING_TIME, LIMIT_INGREDIENTS, NAME_MAX_LENGTH
 
@@ -326,6 +326,21 @@ class PostFavoriteRecipeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
+
+
+class FavoriteRecipeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FavoriteRecipe
+        fields = ('user', 'recipe')
+        read_only_fields = ('user',)
+
+    def validate(self, data):
+        user = self.context['request'].user
+        recipe = data['recipe']
+
+        if FavoriteRecipe.objects.filter(user=user, recipe=recipe).exists():
+            raise serializers.ValidationError('Рецепт уже в избранном')
+        return data
 
 
 class ShoppingCartSerializer(serializers.ModelSerializer):
