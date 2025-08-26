@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.core import validators
+from django.core.exceptions import ValidationError
 from django.db import models
 
 from api.constants import (
@@ -74,6 +75,10 @@ class Recipe(models.Model):
         verbose_name='Время приготовления в мин.',
         validators=[validators.MinValueValidator(LIMIT_COOKING_TIME,
                                                  message=LIMIT_COOKING_MESSAGE)])
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата публикации'
+    )
 
     def __str__(self):
         return f'{self.author}: {self.name}'
@@ -81,6 +86,7 @@ class Recipe(models.Model):
     class Meta:
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
+        ordering = ['-created_at']
 
 
 class RecipeIngredient(models.Model):
@@ -94,6 +100,11 @@ class RecipeIngredient(models.Model):
                                                  message=LIMIT_INGREDIENTS_MESSAGE)])
     unit = models.CharField(max_length=UNIT_MAX_LENGTH,
                             verbose_name='Название единицы измерения')
+
+    def clean(self):
+        super().clean()
+        if self.pk and not self.recipe_ingredients.exists():
+            raise ValidationError('Добавьте хотя бы один ингредиент')
 
     def __str__(self):
         return f'{self.quantity} {self.unit} {self.ingredient.title}'

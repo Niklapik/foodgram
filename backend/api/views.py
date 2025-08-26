@@ -41,6 +41,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         queryset = Recipe.objects.all()
         queryset = queryset.select_related('author')
         queryset = queryset.prefetch_related('tags', 'ingredients')
+        queryset = queryset.order_by('-created_at')
         return queryset
 
     @action(detail=True, methods=('post', 'delete'),
