@@ -1,7 +1,16 @@
 from django.contrib.auth import get_user_model
+from django.core import validators
 from django.db import models
 
-from api.constants import NAME_MAX_LENGTH, UNIT_MAX_LENGTH, SLUG_MAX_LENGTH
+from api.constants import (
+    LIMIT_COOKING_MESSAGE,
+    LIMIT_COOKING_TIME,
+    LIMIT_INGREDIENTS,
+    LIMIT_INGREDIENTS_MESSAGE,
+    NAME_MAX_LENGTH,
+    SLUG_MAX_LENGTH,
+    UNIT_MAX_LENGTH,
+)
 
 User = get_user_model()
 
@@ -62,7 +71,9 @@ class Recipe(models.Model):
                                   verbose_name='Теги')
 
     cooking_time = models.PositiveIntegerField(
-        verbose_name='Время приготовления в мин.')
+        verbose_name='Время приготовления в мин.',
+        validators=[validators.MinValueValidator(LIMIT_COOKING_TIME,
+                                                 message=LIMIT_COOKING_MESSAGE)])
 
     def __str__(self):
         return f'{self.author}: {self.name}'
@@ -77,7 +88,10 @@ class RecipeIngredient(models.Model):
                                related_name='recipe_ingredients')
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE,
                                    related_name='ingredient_recipes')
-    amount = models.PositiveSmallIntegerField(verbose_name='Количество')
+    amount = models.PositiveSmallIntegerField(
+        verbose_name='Количество',
+        validators=[validators.MinValueValidator(LIMIT_INGREDIENTS,
+                                                 message=LIMIT_INGREDIENTS_MESSAGE)])
     unit = models.CharField(max_length=UNIT_MAX_LENGTH,
                             verbose_name='Название единицы измерения')
 

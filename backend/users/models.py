@@ -5,7 +5,7 @@ from django.db import models
 from api.constants import NAME_MAX_LENGTH
 
 
-class CustomUser(AbstractUser):
+class User(AbstractUser):
     email = models.EmailField(unique=True, blank=False)
     first_name = models.CharField(max_length=NAME_MAX_LENGTH, blank=False)
     last_name = models.CharField(max_length=NAME_MAX_LENGTH, blank=False)
@@ -20,20 +20,17 @@ class CustomUser(AbstractUser):
         return self.email
 
 
-User = get_user_model()
-
-
 class Subscription(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='subscriptions',  # подписки
+        related_name='subscriptions',
         verbose_name='Подписчик'
     )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='subscribers',  # подписчики
+        related_name='subscribers',
         verbose_name='Автор'
     )
 

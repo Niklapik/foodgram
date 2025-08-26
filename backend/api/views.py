@@ -10,7 +10,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from recipes.models import (FavoriteRecipe, Ingredient, Recipe,
-                            ShoppingCart, Tag, User)
+                            ShoppingCart, Tag)
 from users.models import Subscription
 from .filters import IngredientFilter, RecipeFilter
 from .paginators import CustomPagination
@@ -21,6 +21,9 @@ from .serializers import (
     SubscriptionSerializer, TagSerializer, UserSerializer
 )
 from .utils import create_shopping_list
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 
 class RecipeViewSet(viewsets.ModelViewSet):

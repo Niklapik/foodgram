@@ -3,3 +3,6 @@ LIMIT_INGREDIENTS = 1
 LIMIT_COOKING_TIME = 1
 SLUG_MAX_LENGTH = 50
 UNIT_MAX_LENGTH = 20
+
+LIMIT_COOKING_MESSAGE = f'Минимальное время приготовления: {LIMIT_COOKING_TIME} минута!'
+LIMIT_INGREDIENTS_MESSAGE = f'Минимальное количество ингредиентов: {LIMIT_INGREDIENTS}!'

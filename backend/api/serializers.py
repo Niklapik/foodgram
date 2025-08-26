@@ -7,8 +7,8 @@ from djoser.serializers import (
 from rest_framework import serializers
 from rest_framework.exceptions import NotAuthenticated
 
-from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag, User
-from users.models import CustomUser, Subscription
+from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
+from users.models import Subscription, User
 from .constants import LIMIT_COOKING_TIME, LIMIT_INGREDIENTS, NAME_MAX_LENGTH
 
 
@@ -89,7 +89,7 @@ class UserCreateSerializer(DjoserUserCreateSerializer):
                                       max_length=NAME_MAX_LENGTH)
 
     class Meta:
-        model = CustomUser
+        model = User
         fields = ('id', 'email', 'username',
                   'first_name', 'last_name', 'password',)
 
@@ -98,7 +98,7 @@ class UserSerializer(serializers.ModelSerializer):
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
-        model = CustomUser
+        model = User
         fields = ('id', 'email', 'username', 'first_name',
                   'last_name', 'is_subscribed', 'avatar')
 
