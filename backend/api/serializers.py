@@ -7,7 +7,8 @@ from djoser.serializers import (
 from rest_framework import serializers
 from rest_framework.exceptions import NotAuthenticated
 
-from recipes.models import FavoriteRecipe, Ingredient, Recipe, RecipeIngredient, Tag
+from recipes.models import (FavoriteRecipe, Ingredient,
+                            Recipe, RecipeIngredient, Tag)
 from users.models import Subscription, User
 from .constants import LIMIT_COOKING_TIME, LIMIT_INGREDIENTS, NAME_MAX_LENGTH
 
@@ -202,7 +203,7 @@ class RecipePostSerializer(serializers.ModelSerializer):
     def validate_cooking_time(self, value):
         if value < LIMIT_COOKING_TIME:
             raise serializers.ValidationError(
-                f"Время приготовления должно быть не меньше 1 минуты",
+                "Время приготовления должно быть не меньше 1 минуты",
                 code='invalid_cooking_time'
             )
         return value

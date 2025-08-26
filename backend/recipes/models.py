@@ -73,8 +73,9 @@ class Recipe(models.Model):
 
     cooking_time = models.PositiveIntegerField(
         verbose_name='Время приготовления в мин.',
-        validators=[validators.MinValueValidator(LIMIT_COOKING_TIME,
-                                                 message=LIMIT_COOKING_MESSAGE)])
+        validators=[validators.MinValueValidator(
+            LIMIT_COOKING_TIME,
+            message=LIMIT_COOKING_MESSAGE)])
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name='Дата публикации'
@@ -96,8 +97,9 @@ class RecipeIngredient(models.Model):
                                    related_name='ingredient_recipes')
     amount = models.PositiveSmallIntegerField(
         verbose_name='Количество',
-        validators=[validators.MinValueValidator(LIMIT_INGREDIENTS,
-                                                 message=LIMIT_INGREDIENTS_MESSAGE)])
+        validators=[validators.MinValueValidator(
+            LIMIT_INGREDIENTS,
+            message=LIMIT_INGREDIENTS_MESSAGE)])
     unit = models.CharField(max_length=UNIT_MAX_LENGTH,
                             verbose_name='Название единицы измерения')
 

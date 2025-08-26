@@ -16,8 +16,9 @@ from .filters import IngredientFilter, RecipeFilter
 from .paginators import CustomPagination
 from .permissions import IsAdminOrReadOnly, IsAuthorOrReadOnly
 from .serializers import (
-    AvatarSerializer, FavoriteRecipeSerializer, IngredientSerializer, PostFavoriteRecipeSerializer,
-    RecipePostSerializer, RecipeSerializer, ShoppingCartSerializer,
+    AvatarSerializer, FavoriteRecipeSerializer, IngredientSerializer,
+    PostFavoriteRecipeSerializer, RecipePostSerializer,
+    RecipeSerializer, ShoppingCartSerializer,
     SubscriptionSerializer, TagSerializer, UserSerializer
 )
 from .utils import create_shopping_list
@@ -62,10 +63,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 recipe,
                 context={'request': request}
             )
-            return Response(recipe_serializer.data, status=status.HTTP_201_CREATED)
+            return Response(recipe_serializer.data,
+                            status=status.HTTP_201_CREATED)
 
         elif request.method == 'DELETE':
-            if not FavoriteRecipe.objects.filter(user=user, recipe=recipe).exists():
+            if not FavoriteRecipe.objects.filter(user=user,
+                                                 recipe=recipe).exists():
                 return Response(
                     {'errors': 'Рецепта не было в избранном'},
                     status=status.HTTP_400_BAD_REQUEST
