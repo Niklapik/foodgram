@@ -2,11 +2,17 @@ from django.contrib import admin
 from django.contrib.auth.models import Group
 from rest_framework.authtoken.models import TokenProxy
 
-from .models import FavoriteRecipe, Ingredient, Recipe, ShoppingCart, Tag
+from .models import FavoriteRecipe, Ingredient, Recipe, RecipeIngredient, ShoppingCart, Tag
+
+
+class RecipeIngredientInline(admin.TabularInline):
+    model = RecipeIngredient
+    extra = 1
 
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
+    inlines = [RecipeIngredientInline]
     list_display = ('author', 'name',)
     list_editable = ('name',)
     search_fields = ('author', 'name',)
