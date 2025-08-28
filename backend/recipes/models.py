@@ -23,7 +23,7 @@ class Tag(models.Model):
 
     slug = models.SlugField(unique=True,
                             max_length=SLUG_MAX_LENGTH,
-                            verbose_name='Идентификатор')
+                            verbose_name='Слаг')
 
     def __str__(self):
         return self.name
@@ -118,9 +118,11 @@ class RecipeIngredient(models.Model):
 
 class FavoriteRecipe(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE,
-                             related_name='favorite_recipes')
+                             related_name='favorite_recipes',
+                             verbose_name='Пользователь')
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE,
-                               related_name='favorited_by')
+                               related_name='favorited_by',
+                               verbose_name='Рецепт')
 
     def __str__(self):
         return f'{self.user.username} добавил в избранное {self.recipe.title}'
