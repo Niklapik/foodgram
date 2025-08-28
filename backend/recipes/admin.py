@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.contrib.auth.models import Group
+from rest_framework.authtoken.models import TokenProxy
 
 from .models import FavoriteRecipe, Ingredient, Recipe, ShoppingCart, Tag
 
@@ -39,3 +41,7 @@ class ShoppingCartAdmin(admin.ModelAdmin):
     list_editable = ('recipe',)
     search_fields = ('user', 'recipe',)
     list_filter = ('user', 'recipe',)
+
+
+admin.site.unregister(Group)
+admin.site.unregister(TokenProxy)
