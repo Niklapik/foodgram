@@ -1,6 +1,5 @@
 from django.contrib.auth import get_user_model
 from django.core import validators
-from django.core.exceptions import ValidationError
 from django.db import models
 
 from api.constants import (
@@ -102,20 +101,20 @@ class RecipeIngredient(models.Model):
         validators=[validators.MinValueValidator(
             LIMIT_INGREDIENTS,
             message=LIMIT_INGREDIENTS_MESSAGE)])
-    unit = models.CharField(max_length=UNIT_MAX_LENGTH,
-                            verbose_name='Название единицы измерения')
-
-    def clean(self):
-        super().clean()
-        if self.pk and not self.recipe_ingredients.exists():
-            raise ValidationError('Добавьте хотя бы один ингредиент')
 
     def __str__(self):
-        return f'{self.quantity} {self.unit} {self.ingredient.title}'
+        return (f'{self.amount} {self.ingredient.measurement_unit} '
+                f'{self.ingredient.name}')
 
     class Meta:
         verbose_name = 'Ингредиент рецепта'
         verbose_name_plural = 'Ингредиенты рецепта'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['recipe', 'ingredient'],
+                name='unique_ingredient_in_recipe'
+            )
+        ]
 
 
 class FavoriteRecipe(models.Model):
@@ -127,7 +126,7 @@ class FavoriteRecipe(models.Model):
                                verbose_name='Рецепт')
 
     def __str__(self):
-        return f'{self.user.username} добавил в избранное {self.recipe.title}'
+        return f'{self.user.username} добавил в избранное {self.recipe.name}'
 
     class Meta:
         unique_together = ('user', 'recipe')

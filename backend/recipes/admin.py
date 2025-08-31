@@ -1,8 +1,20 @@
-from django.contrib import admin
+from django import forms
+from django.contrib import admin, messages
 from django.contrib.auth.models import Group
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 from rest_framework.authtoken.models import TokenProxy
 
-from .models import FavoriteRecipe, Ingredient, Recipe, RecipeIngredient, ShoppingCart, Tag
+from api.constants import RECIPE_NO_INGREDIENTS_MESSAGE
+
+from .models import (
+    FavoriteRecipe,
+    Ingredient,
+    Recipe,
+    RecipeIngredient,
+    ShoppingCart,
+    Tag
+)
 
 
 class RecipeIngredientInline(admin.TabularInline):
@@ -10,12 +22,34 @@ class RecipeIngredientInline(admin.TabularInline):
     extra = 1
 
 
+class RecipeAdminForm(forms.ModelForm):
+    class Meta:
+        model = Recipe
+        fields = '__all__'
+
+
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
+    inlines = (RecipeIngredientInline,)
     list_display = ('author', 'name',)
     list_editable = ('name',)
-    search_fields = ('author', 'name',)
+    search_fields = ('author__username', 'name',)
     list_filter = ('tags',)
+
+    def response_add(self, request, obj, post_url_continue=None):
+        if not obj.ingredients.exists():
+            obj.delete()
+            messages.error(request, RECIPE_NO_INGREDIENTS_MESSAGE)
+            return HttpResponseRedirect(reverse('admin:recipes_recipe_add'))
+        return super().response_add(request, obj, post_url_continue)
+
+    def response_change(self, request, obj):
+        if not obj.ingredients.exists():
+            messages.error(request, RECIPE_NO_INGREDIENTS_MESSAGE)
+            return HttpResponseRedirect(reverse(
+                'admin:recipes_recipe_change',
+                args=[obj.pk]))
+        return super().response_change(request, obj)
 
 
 @admin.register(Ingredient)
